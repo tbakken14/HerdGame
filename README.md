@@ -1,29 +1,42 @@
-# _Template Node_
+# _Herd Game_
 
-node version v18.16.0
-npm version 9.5.1
+#### By _**[Stella Marie](https://github.com/smkou/) and Thomas Bakken**_
 
-Bash Command Line:
-1. npm init
-2. npm install
-
-
-# _{Application Name}_
-
-#### By _**{List of contributors}**_
-
-#### _{Brief description of application}_
+#### _A web game inspired by herding animals_
 
 ## Technologies Used
 
-* _List all_
-* _the major technologies_
-* _you used in your project_
-* _here_
+* _Node_
+* _P5_
+* _Webpack_
+* _ESLint_
+* _Babel_
 
 ## Description
 
-_{This is a detailed description of your application. Give as much detail as needed to explain what the application does as well as any other information you want users or other developers to have.}_
+_Control a player to herd animals into a corral._
+
+### Tasks
+
+[]  Add corral
+[]  Create creatures and herd algorithms
+    - creatures movement algorithms
+    - creatures actively avoid corral
+[]  Add environmental features/hazards (collisions)
+[]  Design levels
+[]  Add graphics
+
+Next meeting: Tue 4.9, 7 pm
+
+Thomas goals:
+
+- Add Corral
+- Add 1 Creature type
+- Integrate Corral and Herd Objective
+
+Stella goals:
+- Replicate ghost algorithms from Pacman (creature)
+- Extend ghost algorithms to herd
 
 ## Setup/Installation Requirements
 
@@ -39,6 +52,12 @@ _{Leave nothing to chance! You want it to be easy for potential users, employers
 
 * _Any known issues_
 * _should go here_
+
+## Future Work
+
+* _Add animal objects_
+* _Add animal behavior_
+* _Add herd destination (corral)_
 
 ## License
 

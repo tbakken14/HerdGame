@@ -11,7 +11,7 @@
     },
     "rules": {
         "no-unused-vars": "off",
-        "semi": 1,
+        "semi": "off",
         "indent": [
             "warn",
             4,
