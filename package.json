@@ -1,5 +1,5 @@
 {
-  "name": "template",
+  "name": "herdgame",
   "version": "1.0.0",
   "description": "node version v18.16.0\r npm version 9.5.1",
   "main": "index.js",
@@ -34,5 +34,8 @@
   "bugs": {
     "url": "https://github.com/tbakken14/Template/issues"
   },
-  "homepage": "https://github.com/tbakken14/Template#readme"
+  "homepage": "https://github.com/tbakken14/Template#readme",
+  "dependencies": {
+    "p5": "^1.9.2"
+  }
 }
