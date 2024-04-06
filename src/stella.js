@@ -32,12 +32,13 @@ const dist = ({ x: px, y: py }, { x: cx, y: cy }) => {
 }
 
 class Creature {
-    constructor({ x, y, size, speed, color, last_position }) {
+    constructor({ x, y, size, speed, color, last_position, proximity }) {
         this.x = x
         this.y = y
         this.size = size
         this.speed = speed
         this.color = color
+        this.prox = proximity
         this.last_pos = last_position
     }
 
@@ -63,12 +64,13 @@ class Red extends Creature {
         super({ 
             x, y, size: 10, speed: 5, 
             color: [255, 0, 0], 
+            proximity: 50,
             last_position: { x: px, y: py }
         })
     }
 
     updatePosition(player, dims) {
-        this.update_pos_by_edge(player, dims)
+        this.update_pos_by_adj(player, dims)
     }
 
     update_pos_by_edge({ x, y }, { width, height }) {
@@ -82,7 +84,7 @@ class Red extends Creature {
         const { dx, dy } = player_direction({ x, y }, this)
         const coord = { x: this.x + dx * this.speed, y: this.y + dy * this.speed }
 
-        if ((coord.x < 0 || coord.x > width) && (coord.y < 0 || coord.y > height)) {
+        if ((coord.x <= 0 || coord.x >= width) && (coord.y <= 0 || coord.y >= height)) {
             const sx = this.x + (dx * -1) * this.speed
             const sy = this.y + (dy * -1) * this.speed
 
@@ -131,7 +133,12 @@ class Red extends Creature {
     
     // Does not account for an alt(dx, dy) = [creature - player](dx, dy)
     update_pos_by_adj({ x, y }, { width, height }) {
-        if (this.last_pos.x === x && this.last_pos.y === y) return true;
+        if ((this.last_pos.x === x && this.last_pos.y === y) || dist({ x, y }, { x: this.x, y: this.y }) > 50) 
+            return true;
+        else {
+            this.last_pos.x = x
+            this.last_pos.y = y
+        }
 
         const { dx, dy } = player_direction({ x, y }, this)
         const sx = this.x + dx * this.speed
@@ -141,26 +148,15 @@ class Red extends Creature {
             return true
         }
 
-        let [ alt_a, alt_b ] = adj_directions({ dx, dy })
-
-        let last_dx = dx, last_dy = dy
-        while (alt_a.dx > width || alt_a.dx < 0 || alt_a.dy > height || alt_a.dy < 0) {
-            alt_a = next_adj_direction({ x: last_dx, y: last_dy }, { lx: alt_a.dx, ly: alt_a.dy })
-            last_dx = alt_a.dx
-            last_dy = alt_a.dy
-        }
-            
-        last_dx = dx, last_dy = dy
-        while (alt_b.dx > width || alt_b.dx < 0 || alt_b.dy > height && alt_b.dy < 0) {
-            alt_b = next_adj_direction({ x: last_dx, y: last_dy }, { lx: alt_b.dx, ly: alt_b.dy })
-            last_dx = alt_b.dx
-            last_dy = alt_b.dy
-        }
-
-        const ax = this.x + alt_a.dx * this.speed
-        const ay = this.y + alt_a.dy * this.speed
-        const bx = this.x + alt_b.dy * this.speed
-        const by = this.y + alt_b.dy * this.speeed
+        let [a, b] = adj_directions({ dx, dy })
+        if (a.x > width || a.x < 0 || a.y > height || a.y < 0)
+            a = next_adj_direction({ dx, dy }, { x: a.x, y: a.y })
+        if (b.x > width || b.x < 0 || b.y > height || b.y < 0)
+            b = next_adj_direction({ dx, dy }, { x: b.x, y: b.y })
+        const ax = this.x + a.dx * this.speed
+        const ay = this.y + a.dy * this.speed
+        const bx = this.x + b.dx * this.speed
+        const by = this.y + b.dy * this.speed
         const dist_a = Math.sqrt((ax - x) ** 2 + (ay - y) ** 2)
         const dist_b = Math.sqrt((bx - x) ** 2 + (by - y) ** 2)
 
@@ -181,6 +177,7 @@ class Pink extends Creature {
         super({
             x, y, size: 10, speed: 5,
             color: [143, 143, 0],
+            proximity: 50,
             last_position: { x: px, y: py }
         })
     }
@@ -193,6 +190,7 @@ class Blue extends Creature {
         super({
             x, y, size: 10, speed: 5,
             color: [0, 255, 0],
+            proximity: 50,
             last_position: { x: px, y: py }
         })
     }
@@ -205,6 +203,7 @@ class Orange extends Creature {
         super({
             x, y, size: 10, speed: 5,
             color: [255, 127, 0],
+            proximity: 50,
             last_position: { x: px, y: py }
         })
     }
