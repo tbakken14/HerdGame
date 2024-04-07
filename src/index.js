@@ -2,12 +2,14 @@ import './css/styles.css'
 import p5 from 'p5'
 import { Player } from './player'
 import { createCreature } from './stella'
+import { Corral } from './corral';
 
 const sketch = p => {
     const width = p.windowWidth
     const height = p.windowHeight
     const player = new Player({ x : 10, y : 10, size: 10 })
-    const creature = createCreature({ width, height }, player, 'red')
+    const red = createCreature({ width, height }, player, 'red')
+    const pink = createCreature({ width, height }, player, 'pink')
     
     p.setup = () => {
         p.createCanvas(width, height)
@@ -17,10 +19,12 @@ const sketch = p => {
         p.background(220)
 
         player.render(p)
-        creature.render(p)
+        red.render(p)
+        pink.render(p)
 
         updatePlayerPosition()
-        creature.updatePosition(player, { width, height })
+        red.updatePosition(player, { width, height })
+        pink.updatePosition(player, { width, height })
     };
 
     p.windowResized = () => {

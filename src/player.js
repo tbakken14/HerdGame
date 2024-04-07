@@ -41,6 +41,7 @@ export class Player {
     render(p) {
         p.fill(200)
         p.stroke(10)
+        p.strokeWeight(1)
         p.square(this.x, this.y, this.size)
     }
 }
