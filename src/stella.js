@@ -1,36 +1,52 @@
-import { dir, dist, adj, tan } from "./calc"
+import { dir, dist, adj, tan, in_bounds, cross_bound, point } from "./calc"
 
-const is_movable = (player, creature) => (
-    creature.last_position.x !== player.x
-    || creature.last_position.y !== player.y
-) && dist(player, creature) <= creature.proximity
-
-const target_ahead = (player, creature, { width, height }) => {
-    const { dx, dy } = dir(player, creature)
-    const [ sx, sy ] = [
-        creature.x + dx * creature.speed,
-        creature.y + dy * creature.speed
-    ]
-    if (sx < width && sx > 0 && sy < height && sy > 0) {
-        creature.move({ x: sx, y: sy })
-        return;
-    }
-
-    const intersect = {
-        dx: sx > width ? 1 : sx < 0 ? -1 : 0,
-        dy: sy > height ? 1 : sy < 0 ? -1 : 0
-    }
-    const [ a, b ] = tan(intersect)
-    a.x = creature.x + a.dx * creature.speed
-    a.y = creature.y = a.dy * creature.speed
-    b.x = creature.x + b.dx * creature.speed,
-    b.y =  creature.y + b.dy * creature.speed
-    if (dist(player, a) > dist(player, b))
-        creature.move(a)
-    else creature.move(b)
+export const move = (creature, { x, y }) => {
+    creature.x = x
+    creature.y = y
 }
 
-const target_step = (player, creature, { width, height }) => {
+export const render = ({ x, y, size, color }, p) => {
+    p.fill(...color)
+    p.noStroke()
+    p.circle(x, y, size)
+}
+
+// Targeting Behaviors
+
+const is_movable = (player, creature) => {
+    const { x, y } = player
+    const { last_position, proximity } = creature
+    if ((last_position.x === x && last_position.y === y)
+    && dist(player, creature) > proximity) return false;
+
+    creature.last_position = { x, y }
+    return true
+}
+
+const target_ahead = function({ player, dims, creature }) {
+    const { x, y, speed } = creature
+    if (!is_movable(player, creature))
+        return { x: player.x, y: player.y }
+
+    const { dx, dy } = dir(player, creature)
+    const s = { x: point(x, dx, speed),  y: point(y, dy, speed) }
+    if (in_bounds(s, dims)) 
+        return s
+
+    const intersect = { dx: cross_bound(s.x, dims.width), dy: cross_bound(s.y, dims.height) }
+    let [ a, b ] = tan(intersect)
+    a = { x: point(x, a.dx, speed), y: point(y, a.dy, speed) }
+    b = { x: point(x, b.dx, speed), y: point(y, b.dy, speed) }
+
+    if (dist(player, a) > dist(player, b)) 
+        return a
+    return b
+}
+
+const target_step = ({ player, dims, creature }) => {
+    const { x, y, speed } = creature
+    if (!is_movable(player, creature)) 
+        return;
     const { dx, dy } = dir(player, creature)
     const [ a, b ] = dx === 0 || dy === 0
         ? tan({ dx, dy })
@@ -63,17 +79,32 @@ const target_corner = (player, creature, { width, height }) => {}
 
 const target_curve = (player, creature, { width, height }) => {}
 
+const targeting = {
+    ahead: target_ahead,
+    step: target_step,
+    offset: target_offset,
+    corner: target_corner,
+    curve: target_curve
+}
+
+export const update_position = (player, dims, creature) => {
+    const { target, ...props } = creature
+    if (!targeting.hasOwnProperty(target)) return false;
+
+    const params = { player, dims, creature: props }
+    const pos = targeting[target](params)
+    move(creature, pos)
+}
+
+// Creatures
+
 const red_creature = (creature) => ({
     ...creature,
     size: 10, 
     speed: 5, 
     color: [255, 0, 0], 
     proximity: 50,
-    update_position(player, dims) {
-        if (!is_movable(player, this)) return;
-        this.last_position = { x: player.x, y: player.y }
-        target_ahead(player, this, dims)
-    }
+    target: 'ahead'
 })
 
 const pink_creature = (creature) => ({
@@ -82,11 +113,7 @@ const pink_creature = (creature) => ({
     speed: 5,
     color: [188, 143, 143],
     proximity: 100,
-    update_position(player, dims) {
-        if (!is_movable(player, this)) return;
-        this.last_position = { x: player.x, y: player.y }
-        target_step(player, this, dims)
-    }
+    target: 'step'
 })
 
 const blue_creature = (creature) => ({
@@ -95,11 +122,7 @@ const blue_creature = (creature) => ({
     speed: 5,
     color: [0, 255, 0],
     proximity: 50,
-    update_position(player, dims) {
-        if (!is_movable(player, this)) return;
-        this.last_position = { x: player.x, y: player.y }
-        target_offset(player, this, dims)
-    }
+    target: 'offset'
 })
 
 const orange_creature = (creature) => ({
@@ -108,12 +131,7 @@ const orange_creature = (creature) => ({
     speed: 5,
     color: [255, 127, 0],
     proximity: 50,
-    update_position(player, dims) {
-        if (!is_movable(player, this)) return;
-        const { x, y } = player
-        this.last_position = { x, y }
-        target_corner(player, this, dims)
-    }
+    target: 'corner'
 })
 
 
@@ -124,24 +142,17 @@ const types = {
     orange: orange_creature
 }
 
-export const createCreature = (dims, player, type, position = { 
-    x: Math.random() * dims.width, 
-    y: Math.random() * dims.height 
-}) => {
+export const createCreature = ({ dims, player, type, position }) => {
     if (!types.hasOwnProperty(type)) return false;
     const { x, y } = player
+    if (position === undefined)
+        position = { 
+            x: Math.random() * dims.width,
+            y: Math.random() * dims.height
+        }
     const creature = {
         ...position,
-        last_position: { x, y },
-        move({ x, y }) {
-            this.x = x
-            this.y = y
-        },
-        render(p) {
-            p.fill(...this.color)
-            p.noStroke()
-            p.circle(this.x, this.y, this.size)
-        }
+        last_position: { x, y }
     }
     return types[type](creature)
 }

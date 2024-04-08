@@ -1,6 +1,9 @@
-export const dir = (origin, pos) => {
-    let dx = pos.x - origin.x
-    let dy = pos.y - origin.y
+export const point = (v, dv, speed) => v + dv * speed
+
+// params: origin, pos
+export const dir = ({ x, y }, { x: px, y: py }) => {
+    let dx = px - x
+    let dy = py - y
     if (dx !== 0) dx = dx / Math.abs(dx)
     if (dy !== 0) dy = dy / Math.abs(dy)
     return { dx, dy }
@@ -11,9 +14,17 @@ export const rev = (origin, pos) => {
     return { dx: -dx, dy: -dy }
 }
 
-export const dist = ({ x: ox, y: oy }, { x: px, y: py }) => Math.sqrt((px - ox) ** 2 + (py - oy) ** 2)
+// params: origin, pos
+export const dist = ({ x, y }, { x: px, y: py }) => Math.sqrt((px - x) ** 2 + (py - y) ** 2)
 
-// adjacent based on eight directions: adj(N) => [NE, NW]
+export const in_bounds = ({ x, y }, { width, height }) => x < width && x > 0 && y < height && y > 0
+
+export const cross_bound = (v, bound) => v > bound ? 1 
+: v < 0 ? -1
+: 0
+
+// adjacent based on eight directions
+// adj(N) => [NE, NW]
 export const adj = ({ dx, dy }) => {
     if (dx === 0) return [{ dx: -1, dy }, { dx: 1, dy }]
     if (dy === 0) return [{ dx, dy: -1 }, { dx, dy: 1 }]
@@ -30,4 +41,4 @@ export const tan = ({ dx, dy }) => {
     return [{ dx: -dx, dy: 0 }, { dx: 0, dy: -dy }]
 }
 
-export default { dir, dist, adj, tan }
+export default { point, dir, rev, dist, in_bounds, cross_bound, adj, tan }
