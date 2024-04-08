@@ -6,17 +6,10 @@ import { render, update_position, createCreature } from './stella'
 const sketch = p => {
     const width = p.windowWidth
     const height = p.windowHeight
+    const dims = { width, height }
     const player = new Player({ x : 10, y : 10, size: 10 })
-    const red = createCreature({
-        dims: { width, height },
-        player,
-        type: 'red'
-    })
-    const pink = createCreature({
-        dims: { width, height },
-        player,
-        type: 'pink'
-    })
+    const red = createCreature({ dims, player, type: 'red' })
+    const pink = createCreature({ dims, player, type: 'pink' })
     
     p.setup = () => {
         p.createCanvas(width, height)
@@ -30,20 +23,14 @@ const sketch = p => {
         render(pink, p)
 
         updatePlayerPosition()
-        update_position({
-            player, 
-            dims: { width, height }, 
-            creature: red
-        })
-        update_position({
-            player, 
-            dims: { width, height }, 
-            creature: pink
-        })
+        update_position({ player, dims, creature: red })
+        update_position({ player, dims, creature: pink })
     };
 
     p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight)
+        dims.width = p.windowWidth
+        dims.height = p.windowHeight
     }
 
     const updatePlayerPosition = () => {

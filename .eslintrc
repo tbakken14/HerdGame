@@ -13,7 +13,7 @@
         "no-unused-vars": "off",
         "semi": "off",
         "indent": [
-            "warn",
+            "off",
             4,
             {
                 "SwitchCase": 1
