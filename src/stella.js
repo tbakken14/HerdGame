@@ -1,11 +1,3 @@
-/*
-    Calculations
-    Tageting Behaviors
-    - 
-    Creatures
-    Actions
-*/
-
 const point = (v, dv, speed) => v + dv * speed
 
 const dir = ({ x, y }, { x: px, y: py }) => {
@@ -16,10 +8,7 @@ const dir = ({ x, y }, { x: px, y: py }) => {
     return { dx, dy }
 }
 
-const rev = (origin, pos) => {
-    const { dx, dy } = dir(origin, pos)
-    return { dx: -dx, dy: -dy }
-}
+const rev = ({ dx, dy }) => ({ dx: -dx, dy: -dy })
 
 // params: origin, pos
 const dist = ({ x, y }, { x: px, y: py }) => Math.sqrt(
@@ -70,36 +59,47 @@ const target_ahead = function({ player, dims, creature }) {
     return b
 }
 
-const target_step = ({ player, dims, creature }) => {
-    const { x: px, y: py, speed: ps } = player
-    const { x, y, speed } = creature
+const target_shadow = ({ player, dims, creature }) => {
+    const { x, y, speed, last_direction } = creature
+    const { dx, dy } = dir( player, creature )
 
+    const [ a, b ] = tan({ dx, dy })
+    const ta = { x: point(x, a.dx, speed), y: point(y, a.dy, speed) }
+    const tb = { x: point(x, b.dx, speed), y: point(y, b.dy, speed) }
+    const a_bound = in_bounds(ta, dims)
+    const b_bound = in_bounds(tb, dims)
+    if (a.dx === last_direction.dx && a.dy === last_direction.dy && a_bound) 
+        return ta
+    if (b.dx === last_direction.dx && b.dy === last_direction.dy && b_bound) 
+        return tb
 
-    const { dx, dy } = dir(player, creature)
-    const [ a, b ] = dx === 0 || dy === 0
-        ? tan({ dx, dy })
-        : adj({ dx, dy })
-    a.x = player.x + a.dx * player.speed 
-    a.y = player.y + a.dy * player.speed
-    b.x = player.x + b.dx * player.speed
-    b.y = player.y + b.dy * player.speed
-
-
-
-    const da = dir(creature, a)
-    const c_a = { 
-        x: creature.x + da.dx * creature.speed,
-        y: creature.y + da.dy * creature.speed
+    const set_last_direction = (dx, dy) => {
+        creature.last_direction.dx = dx
+        creature.last_direction.dy = dy
     }
-    const db = dir(creature, b)
-    const c_b = {
-        x: creature.x + db.dx * creature.speed,
-        y: creature.y + db.dy * creature.speed
+
+    if (a_bound && dist(player, ta) > dist(player, tb)) {
+        set_last_direction(a.dx, a.dy)
+        return ta
     }
-    console.log(c_a, c_b)
-    if (dist(player, c_a) > dist(player, c_b))
-        return c_a
-    else return c_b
+
+    if (b_bound) {
+        set_last_direction(b.dx, b.dy)
+        return tb
+    }
+
+    const center = { dx: a.dx === 0 ? b.dx : a.dx, dy: a.dy === 0 ? b.dy : a.dy }
+    const [ m, n ] = tan(center)
+    const tm = { x: point(x, m.dx, speed), y: point(y, m.dy, speed) }
+    const tn = { x: point(x, n.dx, speed), y: point(y, n.dy, speed) }
+
+    if (dist(player, tm) > dist(player, tn)) {
+        set_last_direction(m.dx, m.dy)
+        return tm
+    }
+
+    set_last_direction(n.dx, n.dy)
+    return tn
 }
 
 const target_offset = ({ player, dims, creature }) => {}
@@ -110,7 +110,7 @@ const target_curve = ({ player, dims, creature }) => {}
 
 const targeting = {
     ahead: target_ahead,
-    step: target_step,
+    step: target_shadow,
     offset: target_offset,
     corner: target_corner,
     curve: target_curve
@@ -120,8 +120,9 @@ const is_movable = (player, creature) => {
     const { x, y } = player
     const { last_position, proximity } = creature
     if ((last_position.x === x && last_position.y === y)
-    && dist(player, creature) > proximity) 
+    || dist(player, creature) > proximity) 
         return false;
+    console.log(last_position, x, y)
     creature.last_position = { x, y }
     return true
 }
@@ -150,7 +151,8 @@ const pink_creature = (creature) => ({
     speed: 5,
     color: [188, 143, 143],
     proximity: 100,
-    target: 'step'
+    target: 'step',
+    last_direction: { dx: 0, dy: 0 }
 })
 
 const blue_creature = (creature) => ({
